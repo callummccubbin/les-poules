@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::f32::consts::{FRAC_1_SQRT_2, PI};
 
 use crate::movement::{AngularVelocity, Velocity};
 use bevy::{
@@ -7,15 +7,61 @@ use bevy::{
 };
 use bevy_mod_picking::PickableBundle;
 
-const STARTING_TRANSLATION: Vec3 = Vec3::new(0., 0., 0.);
+const STARTING_TRANSLATION: Vec3 = Vec3::new(0., -0.5, 0.);
 const STARTING_VELOCITY: Vec3 = Vec3::new(0., 0., 0.5);
 const STARTING_ANGULAR_VELOCITY: Vec3 = Vec3::new(0., 1., 0.);
+
+const TOPDOWN_TRANSFORMS: [Transform; 6] = [
+    // Upwards PY
+    Transform {
+        translation: Vec3::new(0.0, -1.0, 0.0),
+        rotation: Quat::IDENTITY,
+        scale: Vec3::ONE,
+    },
+    //PX
+    Transform {
+        translation: Vec3::new(-1.0, 0.0, 0.0),
+        rotation: Quat::from_xyzw(FRAC_1_SQRT_2, FRAC_1_SQRT_2, 0.0, 0.0),
+        scale: Vec3::ONE,
+    },
+    //NX
+    Transform {
+        translation: Vec3::new(1.0, 0.0, 0.0),
+        rotation: Quat::from_xyzw(0.0, 0.0, FRAC_1_SQRT_2, FRAC_1_SQRT_2),
+        scale: Vec3::ONE,
+    },
+    //PZ
+    Transform {
+        translation: Vec3::new(0.0, 0.0, -1.0),
+        rotation: Quat::from_xyzw(0.5, 0.5, 0.5, 0.5),
+        scale: Vec3::ONE,
+    },
+    //NZ
+    Transform {
+        translation: Vec3::new(0.0, 0.0, 1.0),
+        rotation: Quat::from_xyzw(-0.5, -0.5, 0.5, 0.5),
+        scale: Vec3::ONE,
+    },
+    // Downwards NY
+    Transform {
+        translation: Vec3::new(0.0, 1.0, 0.0),
+        rotation: Quat::from_xyzw(1., 0., 0., 0.),
+        scale: Vec3::ONE,
+    },
+];
 
 #[derive(Bundle)]
 struct SpaceshipBundle {
     velocity: Velocity,
     angular_velocity: AngularVelocity,
     model: PbrBundle,
+}
+
+#[derive(Bundle)]
+struct SpaceshupBundle {
+    velocity: Velocity,
+    angular_velocity: AngularVelocity,
+    model: SceneBundle,
 }
 
 pub struct SpaceshipPlugin;
@@ -42,72 +88,39 @@ fn spawn_spaceship(
     let cube_mesh_handle_top: Handle<Mesh> = meshes.add(create_cube_mesh([0.0, 0.0]));
     let cube_mesh_handle_bottom: Handle<Mesh> = meshes.add(create_cube_mesh([0.0, 0.2]));
 
-    // for ang in 0..4 {
-    //     commands.spawn(SpaceshipBundle {
-    //         velocity: Velocity {
-    //             value: STARTING_VELOCITY,
-    //         },
-    //         angular_velocity: AngularVelocity {
-    //             value: STARTING_ANGULAR_VELOCITY,
-    //         },
-    //         model: SceneBundle {
-    //             scene: asset_server.load("untitled.glb#Scene0"),
-    //             transform: Transform::from_translation(STARTING_TRANSLATION)
-    //                 .with_scale(Vec3 { x: 10., y: 10., z: 10. })
-    //                 .with_rotation(Quat::from_rotation_y(ang as f32 * PI / 2.)),
-    //             ..default()
-    //         }
-    //     }).insert(Name::new("sex")).insert(UnpickableGLTF);
-    // }
+    println!(
+        "{}",
+        Quat::from_rotation_z(PI / 2.0).mul_quat(Quat::from_xyzw(
+            -FRAC_1_SQRT_2,
+            0.0,
+            0.0,
+            FRAC_1_SQRT_2
+        ))
+    );
 
-    commands.spawn(SpaceshipBundle {
-        velocity: Velocity {
-            value: STARTING_VELOCITY,
-        },
-        angular_velocity: AngularVelocity {
-            value: STARTING_ANGULAR_VELOCITY,
-        },
-        model: PbrBundle {
-            mesh: cube_mesh_handle_top.clone(),
-            material: materials.add(StandardMaterial {
-                base_color_texture: Some(custom_texture_handle.clone()),
+    commands
+        .spawn(SpaceshupBundle {
+            velocity: Velocity {
+                value: STARTING_VELOCITY,
+            },
+            angular_velocity: AngularVelocity {
+                value: STARTING_ANGULAR_VELOCITY,
+            },
+            model: SceneBundle {
+                scene: asset_server.load("Chicken.glb#Scene0"),
+                transform: Transform::from_translation(STARTING_TRANSLATION)
+                    .with_scale(Vec3 {
+                        x: 0.005,
+                        y: 0.005,
+                        z: 0.005,
+                    }),
                 ..default()
-            }),
-            ..default()
-        },
-    });
+            },
+        })
+        .insert(Name::new("sex"))
+        .insert(UnpickableGLTF);
 
-    commands.spawn(SpaceshipBundle {
-        velocity: Velocity {
-            value: STARTING_VELOCITY,
-        },
-        angular_velocity: AngularVelocity {
-            value: STARTING_ANGULAR_VELOCITY,
-        },
-        model: PbrBundle {
-            mesh: cube_mesh_handle_bottom.clone(),
-            material: materials.add(StandardMaterial {
-                base_color_texture: Some(custom_texture_handle.clone()),
-                ..default()
-            }),
-            transform: Transform::from_translation(STARTING_TRANSLATION)
-                .with_rotation(Quat::from_rotation_x(PI)),
-            ..default()
-        },
-    });
-
-    // sides
-    for ang in 0..4 {
-        let mut transform = Transform::default()
-            .with_scale(Vec3 {
-                x: 1.,
-                y: 1.,
-                z: 1.,
-            })
-            .with_rotation(Quat::from_rotation_x(PI / 2.0));
-        transform.rotate_axis(Vec3::Z, PI / 2.0);
-        transform.rotate_axis(Vec3::Y, ang as f32 * PI / 2.0);
-
+    for i in 0..6 {
         commands.spawn(SpaceshipBundle {
             velocity: Velocity {
                 value: STARTING_VELOCITY,
@@ -116,12 +129,18 @@ fn spawn_spaceship(
                 value: STARTING_ANGULAR_VELOCITY,
             },
             model: PbrBundle {
-                mesh: cube_mesh_handle_side.clone(),
+                mesh: match i {
+                    0 => cube_mesh_handle_top.clone(),
+                    1..=4 => cube_mesh_handle_side.clone(),
+                    5 => cube_mesh_handle_bottom.clone(),
+                    // learn how to handle this error.
+                    _ => cube_mesh_handle_top.clone(),
+                },
                 material: materials.add(StandardMaterial {
                     base_color_texture: Some(custom_texture_handle.clone()),
                     ..default()
                 }),
-                transform,
+                transform: TOPDOWN_TRANSFORMS[i],
                 ..default()
             },
         });

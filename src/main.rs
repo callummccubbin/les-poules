@@ -22,7 +22,7 @@ fn main() {
         .add_plugins(CameraPlugin)
         //.add_plugins(MovementPlugin)
         //.add_plugins(DebugPlugin)
-        .add_systems(Startup, disable_picking_debug)
+        //.add_systems(Startup, disable_picking_debug)
         .add_plugins(DefaultPickingPlugins)
         .add_plugins(
             DefaultPlugins
